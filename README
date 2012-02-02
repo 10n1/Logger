@@ -9,3 +9,12 @@ The idea is to create a web interface command center for Riot. This is the inten
 * Send text messages from the webpage to the native C++ app
 * Switch from passing text to passing JSON
 * Integrate into Riot :)
+
+=Instructions (have only tested this locally but should work over the network)
+* Serve Logger/Logger/RiotLog.html using a web server...easiest thing to do is to install python and run the following command in the html directory:
+python -m SimpleHTTPServer
+* Open Chrome to localhost:8000/RiotLog.html
+* Open the Logger.sln
+* Build/run Logger
+* Back in RiotLog.html, enter IP address and port and hit connect
+* should work??? if it works you'll see connected in green font in the "Riot Log" on the webpage...if it doesn't work then you'll see something about key mismatch in the Chrom dev tools (Ctrl + Shift + J on Windows or Command + Option + J on Mac)
