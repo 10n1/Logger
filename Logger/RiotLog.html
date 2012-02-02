@@ -1,0 +1,59 @@
+<html>
+	<head>
+		<title>Riot::Log</title>
+		<script type="text/javascript">
+		var RiotLog;
+		var gameData;
+
+		var RiotSocket = {
+			Port : 12345,
+			URI : "ws://127.0.0.1"
+		}
+
+		RiotSocket.OnOpen = function( e ) {
+			console.log( "connected" );
+			gameData.innerHTML += "connected";
+		}
+
+		RiotSocket.OnError = function( e ) {
+			console.log( "error!!" );
+			console.err( e );
+		}
+
+		RiotSocket.OnMessage = function( e ) {
+			console.log( e );
+		}
+
+		RiotSocket.SendMessage = function( message ) {
+			console.log( message );
+		}
+
+		document.addEventListener( "DOMContentLoaded", function( e ) {
+			gameData = document.getElementById( "game-data" );
+
+			RiotLog = new WebSocket( RiotSocket.URI + ":" + RiotSocket.Port );
+
+			RiotLog.onopen = function( e ) {
+				RiotSocket.OnOpen( e );
+			}
+
+			RiotLog.onerror = function( e ) {
+				RiotSocket.OnError( e );
+			}
+
+			RiotLog.onmessage = function( e ) {
+				RiotSocket.OnMessage( e );
+			}
+
+		}, false );
+		</script>
+	</head>
+	<body>
+		<form method="POST" action="#connect" id="connection">
+			<input type="text" id="host" />
+			<input type="text" id="port" />
+			<input type="submit" value="connect" />
+		</form>
+		<div id="game-data"></div>
+	</body>
+</html>
