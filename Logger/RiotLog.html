@@ -4,6 +4,7 @@
 		<script type="text/javascript">
 		var RiotLog;
 		var gameData;
+		var connection;
 
 		var RiotSocket = {
 			Port : 12345,
@@ -29,31 +30,91 @@
 		}
 
 		document.addEventListener( "DOMContentLoaded", function( e ) {
+			// log
 			gameData = document.getElementById( "game-data" );
 
-			RiotLog = new WebSocket( RiotSocket.URI + ":" + RiotSocket.Port );
 
-			RiotLog.onopen = function( e ) {
-				RiotSocket.OnOpen( e );
-			}
+			// connect to Riot
+			connection = document.getElementById( "connection" );
+			connection.addEventListener( "submit", function( e ) {
+				// prevent form submission
+				e.preventDefault();
 
-			RiotLog.onerror = function( e ) {
-				RiotSocket.OnError( e );
-			}
+				// set the background and button text
+				console.log( e );
+				connection.style.backgroundColor = "#6fbf4d";
+				connection.style.fontWeight = "bold";
+				e.target[2].value = "disconnect";
 
-			RiotLog.onmessage = function( e ) {
-				RiotSocket.OnMessage( e );
-			}
+				// initiate the socket connection
+				var URI = e.target[0].value || RiotSocket.URI;
+				var Port = e.target[1].value || RiotSocket.Port;
+				RiotLog = new WebSocket( "ws://" + URI + ":" + Port );
+
+				RiotLog.onopen = function( e ) {
+					RiotSocket.OnOpen( e );
+				}
+
+				RiotLog.onerror = function( e ) {
+					RiotSocket.OnError( e );
+				}
+
+				RiotLog.onmessage = function( e ) {
+					RiotSocket.OnMessage( e );
+				}
+
+				return false;
+			}, false );
 
 		}, false );
 		</script>
+		<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+			font-family: Arial, Verdana, sans-serif;
+			font-size: 1em;
+		}
+
+		form {
+			background-color: #eee;
+			text-align: center;
+			padding: .5em;
+		}
+
+		input {
+			padding: .3em;
+		}
+
+		#log {
+			width: 75%;
+			margin: 0 auto;
+			padding: .2em;
+		}
+
+		#game-data {
+			font-family: monospace;
+			padding: .5em;
+			background-color: #333;
+			color: #3c3;
+			height: 500px;
+			overflow: auto;
+		}
+
+		</style>
 	</head>
 	<body>
-		<form method="POST" action="#connect" id="connection">
-			<input type="text" id="host" />
-			<input type="text" id="port" />
-			<input type="submit" value="connect" />
+		<form id="connection">
+			<label for="host">Host:</label>
+			<input type="text" id="host" value="127.0.0.1" />
+			<label for="port">Port:</label>
+			<input type="text" id="port" value="12345" />
+			<input type="submit" id="connection_submit" value="connect" />
 		</form>
-		<div id="game-data"></div>
+
+		<div id="log">
+			<h2>Riot log:</h2>
+			<div id="game-data"></div>
+		</div>
 	</body>
 </html>
