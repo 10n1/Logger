@@ -1,0 +1,11 @@
+Logger for Riot (prototype)
+
+Inspired by this post on #AltDevBlogADay: altdevblogaday.com/2012/01/23/writing-your-own-websocket-server/
+
+The idea is to create a web interface command center for Riot. This is the intended roadmap for the Logger:
+
+* [DONE] Create proof of concept project composed of a C++ application communication with a web page and successfully complete the WebSocket handshake
+* Send text messages from the native C++ app to the webpage
+* Send text messages from the webpage to the native C++ app
+* Switch from passing text to passing JSON
+* Integrate into Riot :)
