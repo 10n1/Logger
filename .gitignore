@@ -2,3 +2,16 @@
 *.sdf
 *.swp
 *.zip
+*.log
+*.tlog
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.exe
+*.suo
+*.lib
+*.lastbuildstate
+*.manifest
+*.res
+*.rc

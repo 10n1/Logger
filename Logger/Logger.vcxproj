@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="WebSocketServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Base64Encoder\Base64Encoder.vcxproj">
@@ -148,6 +149,9 @@
     <ProjectReference Include="..\sha1\SHA1\SHA1.vcxproj">
       <Project>{9afc99b9-f0a3-4f48-aa48-6e81c6b16791}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WebSocketServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
