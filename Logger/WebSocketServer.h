@@ -19,6 +19,7 @@ public:
 
 private:
     unsigned int SHA1( const unsigned char* szMessage, char* szMessageHash );
+    unsigned int Base64Encode( const unsigned char* szMessage, char* szEncodedMessage );
 
     WSAData m_wsaData;
     // used to open up a port on the server to listen for clients' requests

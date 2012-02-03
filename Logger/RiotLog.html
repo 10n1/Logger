@@ -14,6 +14,8 @@
 		RiotSocket.OnOpen = function( e ) {
 			console.log( "connected" );
 			gameData.innerHTML += "connected";
+			connection.style.backgroundColor = "#6fbf4d";
+			connection.style.fontWeight = "bold";
 		}
 
 		RiotSocket.OnError = function( e ) {
@@ -40,11 +42,7 @@
 				// prevent form submission
 				e.preventDefault();
 
-				// set the background and button text
 				console.log( e );
-				connection.style.backgroundColor = "#6fbf4d";
-				connection.style.fontWeight = "bold";
-				e.target[2].value = "disconnect";
 
 				// initiate the socket connection
 				var URI = e.target[0].value || RiotSocket.URI;
@@ -109,7 +107,7 @@
 			<input type="text" id="host" value="127.0.0.1" />
 			<label for="port">Port:</label>
 			<input type="text" id="port" value="12345" />
-			<input type="submit" id="connection_submit" value="connect" />
+			<input type="submit" value="connect" />
 		</form>
 
 		<div id="log">

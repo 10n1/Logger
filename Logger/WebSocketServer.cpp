@@ -194,9 +194,7 @@ unsigned int WebSocketServer::PrepareResponse( const char* szWebSocketKey, char*
     unsigned int nHashSize = SHA1( ( unsigned char* )szWebSocketKey_GUID, szSHA1Hash );
 
     // base64 encode the SHA1 hash of the Key_GUID
-    aoBase64Encoder b64Encoder;
-    b64Encoder.Encode( ( const unsigned char* )szSHA1Hash, nHashSize );
-    sprintf( szBase64, "%s", b64Encoder.GetEncoded() );
+    unsigned int nBase64Size = Base64Encode( ( unsigned char* )szSHA1Hash, szBase64 );
 
     // create response header
     p = szResponseHeader;
@@ -246,4 +244,14 @@ unsigned int WebSocketServer::SHA1( const unsigned char* szMessage, char* szMess
     szMessageHash[ ii / 2 ] = 0;
 
     return ( unsigned int )strlen( szMessageHash );
+}
+
+unsigned int WebSocketServer::Base64Encode( const unsigned char* szMessage, char* szEncodedMessage )
+{
+    aoBase64Encoder b64Encoder;
+
+    b64Encoder.Encode( szMessage, strlen( ( const char* )szMessage ) );
+    sprintf( szEncodedMessage, "%s", b64Encoder.GetEncoded() );
+
+    return ( unsigned int )strlen( szEncodedMessage );
 }
