@@ -5,8 +5,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Logger", "Logger\Logger.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SHA1", "sha1\SHA1\SHA1.vcxproj", "{9AFC99B9-F0A3-4F48-AA48-6E81C6B16791}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Base64Encoder", "Base64Encoder\Base64Encoder.vcxproj", "{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,14 +29,6 @@ Global
 		{9AFC99B9-F0A3-4F48-AA48-6E81C6B16791}.Release|Win32.Build.0 = Release|Win32
 		{9AFC99B9-F0A3-4F48-AA48-6E81C6B16791}.Release|x64.ActiveCfg = Release|x64
 		{9AFC99B9-F0A3-4F48-AA48-6E81C6B16791}.Release|x64.Build.0 = Release|x64
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Debug|Win32.Build.0 = Debug|Win32
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Debug|x64.ActiveCfg = Debug|x64
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Debug|x64.Build.0 = Debug|x64
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Release|Win32.ActiveCfg = Release|Win32
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Release|Win32.Build.0 = Release|Win32
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Release|x64.ActiveCfg = Release|x64
-		{FCBC55EE-9F8F-4F7C-BCBA-B8A17886F33D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

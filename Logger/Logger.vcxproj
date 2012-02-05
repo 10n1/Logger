@@ -143,14 +143,12 @@
     <ClCompile Include="WebSocketServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Base64Encoder\Base64Encoder.vcxproj">
-      <Project>{fcbc55ee-9f8f-4f7c-bcba-b8a17886f33d}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\sha1\SHA1\SHA1.vcxproj">
       <Project>{9afc99b9-f0a3-4f48-aa48-6e81c6b16791}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="modp_b64_data.h" />
     <ClInclude Include="WebSocketServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
