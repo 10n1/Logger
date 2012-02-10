@@ -44,8 +44,6 @@
 				// prevent form submission
 				e.preventDefault();
 
-				gameData.innerHTML += "connecting... <br />";
-
 				// initiate the socket connection
 				var URI = e.target[0].value || Socket.URI;
 				var Port = e.target[1].value || Socket.Port;
