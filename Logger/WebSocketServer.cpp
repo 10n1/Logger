@@ -4,6 +4,7 @@
 #include <WS2tcpip.h>
 #include <stdio.h>
 #include "WebSocketServer.h"
+#include "modp_b64.h"
 #include "modp_b64_data.h"
 
 extern "C" { 
@@ -266,47 +267,6 @@ unsigned int WebSocketServer::SHA1( const unsigned char* szMessage, char* szMess
     }
 
     return nHashLength;
-}
-
-int modp_b64_encode(char* dest, const char* str, int len)
-{
-    int i;
-    const uint8_t* s = (const uint8_t*) str;
-    uint8_t* p = (uint8_t*) dest;
-
-    /* unsigned here is important! */
-    /* uint8_t is fastest on G4, amd */
-    /* uint32_t is fastest on Intel */
-    uint32_t t1, t2, t3;
-
-    for (i = 0; i < len - 2; i += 3) {
-        t1 = s[i]; t2 = s[i+1]; t3 = s[i+2];
-        *p++ = e0[t1];
-        *p++ = e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)];
-        *p++ = e1[((t2 & 0x0F) << 2) | ((t3 >> 6) & 0x03)];
-        *p++ = e2[t3];
-    }
-
-    switch (len - i) {
-    case 0:
-        break;
-    case 1:
-        t1 = s[i];
-        *p++ = e0[t1];
-        *p++ = e1[(t1 & 0x03) << 4];
-        *p++ = CHARPAD;
-        *p++ = CHARPAD;
-        break;
-    default: /* case 2 */
-        t1 = s[i]; t2 = s[i+1];
-        *p++ = e0[t1];
-        *p++ = e1[((t1 & 0x03) << 4) | ((t2 >> 4) & 0x0F)];
-        *p++ = e2[(t2 & 0x0F) << 2];
-        *p++ = CHARPAD;
-    }
-
-    *p = '\0';
-    return (int)(p - (uint8_t*)dest);
 }
 
 unsigned int WebSocketServer::Base64Encode( const unsigned char* szMessage, char* szEncodedMessage )

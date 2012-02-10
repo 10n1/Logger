@@ -21,12 +21,18 @@
     <ClCompile Include="WebSocketServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modp_b64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WebSocketServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="modp_b64_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modp_b64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
