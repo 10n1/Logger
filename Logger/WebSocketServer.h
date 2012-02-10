@@ -25,7 +25,7 @@ private:
     // used to open up a port on the server to listen for clients' requests
     SOCKET m_ServerSocket;
     // used to communicate with clients
-    SOCKET m_ClientSocket;
+    SOCKET m_ClientListener;
 
     struct addrinfo* m_addrResult;
     struct addrinfo m_addrHints;

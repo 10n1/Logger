@@ -13,7 +13,7 @@ static const char* szTestKeys[] = {
 int main( void )
 {
     WebSocketServer wsServer;
-    
+
     wsServer.Start();
     wsServer.Stop();
 

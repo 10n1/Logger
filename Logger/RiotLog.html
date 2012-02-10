@@ -1,33 +1,35 @@
 <html>
 	<head>
-		<title>Riot::Log</title>
+		<title>Log</title>
 		<script type="text/javascript">
-		var RiotLog;
+		var Log;
 		var gameData;
 		var connection;
+		var bConnected;
 
-		var RiotSocket = {
+		var Socket = {
 			Port : 12345,
 			URI : "ws://127.0.0.1"
 		}
 
-		RiotSocket.OnOpen = function( e ) {
+		Socket.OnOpen = function( e ) {
+			clearInterval( bConnected );
 			console.log( "connected" );
-			gameData.innerHTML += "connected";
+			gameData.innerHTML += "connected <br />";
 			connection.style.backgroundColor = "#6fbf4d";
 			connection.style.fontWeight = "bold";
 		}
 
-		RiotSocket.OnError = function( e ) {
+		Socket.OnError = function( e ) {
 			console.log( "error!!" );
 			console.err( e );
 		}
 
-		RiotSocket.OnMessage = function( e ) {
+		Socket.OnMessage = function( e ) {
 			console.log( e );
 		}
 
-		RiotSocket.SendMessage = function( message ) {
+		Socket.SendMessage = function( message ) {
 			console.log( message );
 		}
 
@@ -36,30 +38,34 @@
 			gameData = document.getElementById( "game-data" );
 
 
-			// connect to Riot
+			// connect to 
 			connection = document.getElementById( "connection" );
 			connection.addEventListener( "submit", function( e ) {
 				// prevent form submission
 				e.preventDefault();
 
-				console.log( e );
+				gameData.innerHTML += "connecting... <br />";
 
 				// initiate the socket connection
-				var URI = e.target[0].value || RiotSocket.URI;
-				var Port = e.target[1].value || RiotSocket.Port;
-				RiotLog = new WebSocket( "ws://" + URI + ":" + Port );
+				var URI = e.target[0].value || Socket.URI;
+				var Port = e.target[1].value || Socket.Port;
 
-				RiotLog.onopen = function( e ) {
-					RiotSocket.OnOpen( e );
-				}
+				// keep trying to connect until it works 
+				bConnected = setInterval( function() {
+					Log = new WebSocket( "ws://" + URI + ":" + Port );
 
-				RiotLog.onerror = function( e ) {
-					RiotSocket.OnError( e );
-				}
+					Log.onopen = function( e ) {
+						Socket.OnOpen( e );
+					}
 
-				RiotLog.onmessage = function( e ) {
-					RiotSocket.OnMessage( e );
-				}
+					Log.onerror = function( e ) {
+						Socket.OnError( e );
+					}
+
+					Log.onmessage = function( e ) {
+						Socket.OnMessage( e );
+					}
+				}, 1000 );
 
 				return false;
 			}, false );
@@ -111,7 +117,7 @@
 		</form>
 
 		<div id="log">
-			<h2>Riot log:</h2>
+			<h2>log:</h2>
 			<div id="game-data"></div>
 		</div>
 	</body>

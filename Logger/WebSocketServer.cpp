@@ -4,7 +4,6 @@
 #include <WS2tcpip.h>
 #include <stdio.h>
 #include "WebSocketServer.h"
-//#include "Base64Encoder.h"
 #include "modp_b64_data.h"
 
 extern "C" { 
@@ -19,7 +18,7 @@ WebSocketServer::WebSocketServer( void )
     : m_szHost( LOCALHOST )
     , m_nPort( DEFAULT_PORT )
     , m_ServerSocket( INVALID_SOCKET )
-    , m_ClientSocket( INVALID_SOCKET )
+    , m_ClientListener( INVALID_SOCKET )
 {
 }
 
@@ -27,7 +26,7 @@ WebSocketServer::WebSocketServer( const char* szHost, unsigned int nPort )
     : m_szHost( szHost )
     , m_nPort( nPort )
     , m_ServerSocket( INVALID_SOCKET )
-    , m_ClientSocket( INVALID_SOCKET )
+    , m_ClientListener( INVALID_SOCKET )
 {
 }
 
@@ -41,44 +40,58 @@ void WebSocketServer::Start( void )
     // open server socket to listen for client connections
     OpenSocket();
 
-    // accept incoming connections
-    m_ClientSocket = accept( m_ServerSocket, NULL, NULL );
-    if( m_ClientSocket == INVALID_SOCKET )
+    bool bListening = true;
+
+    while( bListening )
     {
-        printf( "accept for m_ClientSocket failed :(\n" );
-        closesocket( m_ServerSocket );
-        WSACleanup();
-        // crash!
-    }
-
-    char szReceiveBuffer[ RECEIVE_BUFFER_SIZE ];
-    unsigned int nReceiveBufferSize = RECEIVE_BUFFER_SIZE;
-
-    char szWebSocketKey[ MAX_PATH ];
-    char szResponseHeader[ MAX_PATH ];
-
-    // execute initial handshake
-    int iReceivedBytes = recv( m_ClientSocket, szReceiveBuffer, nReceiveBufferSize, 0 );
-    if( iReceivedBytes > 0 )
-    {
-        RetrieveWebSocketKey( szReceiveBuffer, szWebSocketKey );
-        PrepareResponse( szWebSocketKey, szResponseHeader );
-
-        int iSentBytes = send( m_ClientSocket, szResponseHeader, strlen( szResponseHeader ), 0 );
-        if( iSentBytes == SOCKET_ERROR )
+        // accept incoming connections
+        m_ClientListener = accept( m_ServerSocket, NULL, NULL );
+        if( m_ClientListener == INVALID_SOCKET )
         {
-            printf( "send failed :(\n" );
-            closesocket( m_ClientSocket );
+            printf( "accept for m_ClientListener failed :(\n" );
+            closesocket( m_ServerSocket );
             WSACleanup();
-            // crash!
+            DebugBreak(); // crash!
         }
-    }
-    else
-    {
-        printf( "recv failed :(\n" );
-        closesocket( m_ClientSocket );
-        WSACleanup();
-        // crash!
+
+        char szReceiveBuffer[ RECEIVE_BUFFER_SIZE ];
+        unsigned int nReceiveBufferSize = RECEIVE_BUFFER_SIZE;
+
+        char szWebSocketKey[ MAX_PATH ];
+        char szResponseHeader[ MAX_PATH ];
+
+        // execute initial handshake
+        int iReceivedBytes = recv( m_ClientListener, szReceiveBuffer, nReceiveBufferSize, 0 );
+        if( iReceivedBytes > 0 )
+        {
+            printf( "# bytes received: %d\n%s\n", iReceivedBytes, szReceiveBuffer );
+
+            RetrieveWebSocketKey( szReceiveBuffer, szWebSocketKey );
+            unsigned int nResponseLength = PrepareResponse( szWebSocketKey, szResponseHeader );
+            if( nResponseLength == 0 )
+            {
+                printf( "Invalid response length :(\n" );
+                DebugBreak();
+            }
+
+            int iSentBytes = send( m_ClientListener, szResponseHeader, nResponseLength, 0 );
+            if( iSentBytes == SOCKET_ERROR )
+            {
+                printf( "send failed :(\n" );
+                closesocket( m_ClientListener );
+                WSACleanup();
+                DebugBreak(); // crash!
+            }
+
+            printf( "# bytes sent: %d\n\%s\n", iSentBytes, szResponseHeader );
+        }
+        else
+        {
+            printf( "recv failed :(\n" );
+            closesocket( m_ClientListener );
+            WSACleanup();
+            DebugBreak();// crash!
+        }
     }
 
     // ??
@@ -86,12 +99,12 @@ void WebSocketServer::Start( void )
 
 void WebSocketServer::Stop( void )
 {
-    shutdown( m_ClientSocket, SD_SEND );
+    shutdown( m_ClientListener, SD_SEND );
     closesocket( m_ServerSocket );
-    closesocket( m_ClientSocket );
+    closesocket( m_ClientListener );
     WSACleanup();
     m_ServerSocket = INVALID_SOCKET;
-    m_ClientSocket = INVALID_SOCKET;
+    m_ClientListener = INVALID_SOCKET;
 }
 
 bool WebSocketServer::OpenSocket( void )
@@ -103,7 +116,7 @@ bool WebSocketServer::OpenSocket( void )
     {
         printf( "WSAStartup failed :(\n" );
         bInitialized = false;
-        // crash!
+        DebugBreak(); // crash!
     }
 
     ZeroMemory( &m_addrHints, sizeof( struct addrinfo ) );
@@ -121,7 +134,7 @@ bool WebSocketServer::OpenSocket( void )
         printf( "getaddrinfo failed :(\n" );
         WSACleanup();
         bInitialized = false;
-        // crash!
+        DebugBreak(); // crash!
     }
 
     m_ServerSocket = socket( m_addrResult->ai_family, m_addrResult->ai_socktype, m_addrResult->ai_protocol );
@@ -131,7 +144,7 @@ bool WebSocketServer::OpenSocket( void )
         freeaddrinfo( m_addrResult );
         WSACleanup();
         bInitialized = false;
-        // crash!
+        DebugBreak(); // crash!
     }
 
     // bind socket to host:port
@@ -142,7 +155,7 @@ bool WebSocketServer::OpenSocket( void )
         closesocket( m_ServerSocket );
         WSACleanup();
         bInitialized = false;
-        // crash!
+        DebugBreak(); // crash!
     }
 
     freeaddrinfo( m_addrResult );
@@ -154,7 +167,7 @@ bool WebSocketServer::OpenSocket( void )
         closesocket( m_ServerSocket );
         WSACleanup();
         bInitialized = false;
-        // crash!
+        DebugBreak(); // crash!
     }
 
     return bInitialized;
@@ -193,6 +206,8 @@ unsigned int WebSocketServer::PrepareResponse( const char* szWebSocketKey, char*
 
     // generate SHA1 hash of the Key_GUID
     unsigned int nHashSize = SHA1( ( unsigned char* )szWebSocketKey_GUID, szSHA1Hash );
+    if( nHashSize == 0 )
+        return 0;
 
     // base64 encode the SHA1 hash of the Key_GUID
     unsigned int nBase64Size = Base64Encode( ( unsigned char* )szSHA1Hash, szBase64 );
@@ -223,28 +238,34 @@ unsigned int WebSocketServer::PrepareResponse( const char* szWebSocketKey, char*
 
 unsigned int WebSocketServer::SHA1( const unsigned char* szMessage, char* szMessageHash )
 {
-    SHA1Context shaContext;
+    static SHA1Context shaContext;
 
     SHA1Reset( &shaContext );
     SHA1Input( &shaContext, szMessage, strlen( ( const char* )szMessage ) );
     SHA1Result( &shaContext );
 
     char szDigest[ MAX_PATH ];
-    sprintf( szDigest, "%x%x%x%x%x", shaContext.Message_Digest[0], shaContext.Message_Digest[1],
-        shaContext.Message_Digest[2], shaContext.Message_Digest[3], shaContext.Message_Digest[4] );
-
-    unsigned int ii = 0;
-    unsigned int nDigestLength = strlen( szDigest );
-    for( ii = 0; ii < nDigestLength; ii += 2)
+    unsigned int nHashLength = 0;
+    if( shaContext.Computed && !shaContext.Corrupted )
     {
-        char substring[] = { szDigest[ ii ], szDigest[ ii + 1 ], 0 };
-        int j = 0;
-        sscanf_s( substring, "%x", &j );
-        szMessageHash[ ii / 2 ] = j;
-    }
-    szMessageHash[ ii / 2 ] = 0;
+        sprintf( szDigest, "%x%x%x%x%x", shaContext.Message_Digest[0], shaContext.Message_Digest[1],
+            shaContext.Message_Digest[2], shaContext.Message_Digest[3], shaContext.Message_Digest[4] );
 
-    return ( unsigned int )strlen( szMessageHash );
+        unsigned int ii = 0;
+        unsigned int nDigestLength = strlen( szDigest );
+        for( ii = 0; ii < nDigestLength; ii += 2)
+        {
+            char substring[] = { szDigest[ ii ], szDigest[ ii + 1 ], 0 };
+            int j = 0;
+            sscanf_s( substring, "%x", &j );
+            szMessageHash[ ii / 2 ] = j;
+        }
+        szMessageHash[ ii / 2 ] = 0;
+
+        nHashLength = ( unsigned int )strlen( szMessageHash );
+    }
+
+    return nHashLength;
 }
 
 int modp_b64_encode(char* dest, const char* str, int len)
@@ -290,13 +311,6 @@ int modp_b64_encode(char* dest, const char* str, int len)
 
 unsigned int WebSocketServer::Base64Encode( const unsigned char* szMessage, char* szEncodedMessage )
 {
-    //aoBase64Encoder b64Encoder;
-
-    //b64Encoder.Encode( szMessage, strlen( ( const char* )szMessage ) );
-    //sprintf( szEncodedMessage, "%s", b64Encoder.GetEncoded() );
-
-    //return ( unsigned int )strlen( szEncodedMessage );
-    
     char szSrcMessage[ MAX_PATH ];
     sprintf( szSrcMessage, "%s", szMessage );
 
