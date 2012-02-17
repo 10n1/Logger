@@ -5,6 +5,7 @@
 		var Log;
 		var gameData;
 		var connection;
+		var message;
 		var bConnected;
 
 		var Socket = {
@@ -15,9 +16,11 @@
 		Socket.OnOpen = function( e ) {
 			clearInterval( bConnected );
 			console.log( "connected" );
-			gameData.innerHTML += "connected <br />";
+			gameData.innerHTML += "[CONNECTED] " + ( new Date ).toString() + "<br />";
 			connection.style.backgroundColor = "#6fbf4d";
 			connection.style.fontWeight = "bold";
+
+			//Log.send( "hi there" );
 		}
 
 		Socket.OnError = function( e ) {
@@ -33,7 +36,7 @@
 			console.log( message );
 		}
 
-		document.addEventListener( "DOMContentLoaded", function( e ) {
+		var Init = function( e ) {
 			// log
 			gameData = document.getElementById( "game-data" );
 
@@ -68,6 +71,19 @@
 				return false;
 			}, false );
 
+			message = document.getElementById( "message" );
+			message.addEventListener( "click", function( e ) {
+				e.preventDefault();
+
+				Log.send( "hi there" );
+
+				return false;
+			}, false );
+		}
+
+		// OnLoad
+		document.addEventListener( "DOMContentLoaded", function OnLoad( e ) {
+			Init( e );
 		}, false );
 		</script>
 		<style type="text/css">
@@ -108,11 +124,14 @@
 	<body>
 		<form id="connection">
 			<label for="host">Host:</label>
-			<input type="text" id="host" value="127.0.0.1" />
+			<!-- <input type="text" id="host" value="127.0.0.1" /> -->
+			<input type="text" id="host" value="10.211.55.3" />
 			<label for="port">Port:</label>
 			<input type="text" id="port" value="12345" />
 			<input type="submit" value="connect" />
 		</form>
+
+		<a href="#" id="message" title="hi there">hi there</a>
 
 		<div id="log">
 			<h2>log:</h2>
