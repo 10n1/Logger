@@ -17,6 +17,8 @@ public:
     unsigned int RetrieveWebSocketKey( const char* szRequestHeader, char* szWebSocketKey );
     unsigned int PrepareResponse( const char* szWebSocketKey, char* szResponseHeader );
 
+    void SendMessge( const char* szServerMessage );
+
 private:
     unsigned int SHA1( const unsigned char* szMessage, char* szMessageHash );
     unsigned int Base64Encode( const unsigned char* szMessage, char* szEncodedMessage );

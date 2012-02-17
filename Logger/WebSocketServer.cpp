@@ -1,5 +1,6 @@
 // WebSocketServer.cpp
 
+// TODO: cross-platform sockets
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <stdio.h>
@@ -11,8 +12,44 @@ extern "C" {
 #include "sha1.h" 
 }
 
+// NOTE: sending/receiving messages follows the following packet format:
+//
+//  0                   1                   2                   3
+//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+// +-+-+-+-+-------+-+-------------+-------------------------------+
+// |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+// |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+// |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+// | |1|2|3|       |K|             |                               |
+// +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+// |     Extended payload length continued, if payload len == 127  |
+// + - - - - - - - - - - - - - - - +-------------------------------+
+// |                               |Masking-key, if MASK set to 1  |
+// +-------------------------------+-------------------------------+
+// | Masking-key (continued)       |          Payload Data         |
+// +-------------------------------- - - - - - - - - - - - - - - - +
+// :                     Payload Data continued ...                :
+// + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+// |                     Payload Data continued ...                |
+// +---------------------------------------------------------------+
+
+enum WSMessage_Type
+{
+    Handshake = 0,
+    Packet,
+    Count,
+};
+
+typedef struct _WSMessage
+{
+    unsigned int nSender;
+    unsigned int nType;
+    char* szData;
+} WSMessage;
+
+
 static const char* LOCALHOST = "127.0.0.1";
-static const unsigned int DEFAULT_PORT = 12345;
+static const unsigned int DEFAULT_PORT = 8080; //12345;
 static const unsigned int RECEIVE_BUFFER_SIZE = 512;
 
 WebSocketServer::WebSocketServer( void )
@@ -43,24 +80,24 @@ void WebSocketServer::Start( void )
 
     bool bListening = true;
 
+    // accept incoming connections
+    m_ClientListener = accept( m_ServerSocket, NULL, NULL );
+    if( m_ClientListener == INVALID_SOCKET )
+    {
+        printf( "accept for m_ClientListener failed :(\n" );
+        closesocket( m_ServerSocket );
+        WSACleanup();
+        DebugBreak(); // crash!
+    }
+
+    char szReceiveBuffer[ RECEIVE_BUFFER_SIZE ];
+    unsigned int nReceiveBufferSize = RECEIVE_BUFFER_SIZE;
+
+    char szWebSocketKey[ MAX_PATH ];
+    char szResponseHeader[ MAX_PATH ];
+
     while( bListening )
     {
-        // accept incoming connections
-        m_ClientListener = accept( m_ServerSocket, NULL, NULL );
-        if( m_ClientListener == INVALID_SOCKET )
-        {
-            printf( "accept for m_ClientListener failed :(\n" );
-            closesocket( m_ServerSocket );
-            WSACleanup();
-            DebugBreak(); // crash!
-        }
-
-        char szReceiveBuffer[ RECEIVE_BUFFER_SIZE ];
-        unsigned int nReceiveBufferSize = RECEIVE_BUFFER_SIZE;
-
-        char szWebSocketKey[ MAX_PATH ];
-        char szResponseHeader[ MAX_PATH ];
-
         // execute initial handshake
         int iReceivedBytes = recv( m_ClientListener, szReceiveBuffer, nReceiveBufferSize, 0 );
         if( iReceivedBytes > 0 )
@@ -89,6 +126,7 @@ void WebSocketServer::Start( void )
         else
         {
             printf( "recv failed :(\n" );
+            bListening = false;
             closesocket( m_ClientListener );
             WSACleanup();
             DebugBreak();// crash!
@@ -191,7 +229,7 @@ unsigned int WebSocketServer::RetrieveWebSocketKey(  const char* szRequestHeader
     sprintf( szWebSocketKey, "%s", strtok( szWebSocketKey, " " ) );
     sprintf( szWebSocketKey, "%s", strtok( NULL, " " ) );
 
-    return strlen( szWebSocketKey );
+    return ( unsigned int )( strlen( szWebSocketKey ) );
 }
 
 unsigned int WebSocketServer::PrepareResponse( const char* szWebSocketKey, char* szResponseHeader )
@@ -237,6 +275,11 @@ unsigned int WebSocketServer::PrepareResponse( const char* szWebSocketKey, char*
     return ( unsigned int )( p - szResponseHeader );
 }
 
+void WebSocketServer::SendMessge( const char* szServerMessage )
+{
+}
+
+// Util handshake functions
 unsigned int WebSocketServer::SHA1( const unsigned char* szMessage, char* szMessageHash )
 {
     static SHA1Context shaContext;
