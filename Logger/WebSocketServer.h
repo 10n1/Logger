@@ -13,6 +13,7 @@ public:
     void Start( void );
     void Stop( void );
     bool OpenSocket( void );
+    bool CloseSocket( void );
 
     unsigned int RetrieveWebSocketKey( const char* szRequestHeader, char* szWebSocketKey );
     unsigned int PrepareResponse( const char* szWebSocketKey, char* szResponseHeader );
@@ -20,6 +21,7 @@ public:
     void SendMessge( const char* szServerMessage );
 
 private:
+    unsigned int ProcessHandshake( void );
     unsigned int SHA1( const unsigned char* szMessage, char* szMessageHash );
     unsigned int Base64Encode( const unsigned char* szMessage, char* szEncodedMessage );
 

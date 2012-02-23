@@ -2,7 +2,7 @@
 	<head>
 		<title>Log</title>
 		<script type="text/javascript">
-		var Log;
+		var Log = null;
 		var gameData;
 		var connection;
 		var message;
@@ -20,7 +20,7 @@
 			connection.style.backgroundColor = "#6fbf4d";
 			connection.style.fontWeight = "bold";
 
-			//Log.send( "hi there" );
+			Log.send( "success" );
 		}
 
 		Socket.OnError = function( e ) {
@@ -34,6 +34,7 @@
 
 		Socket.SendMessage = function( message ) {
 			console.log( message );
+			Log.send( message );
 		}
 
 		var Init = function( e ) {
@@ -53,6 +54,9 @@
 
 				// keep trying to connect until it works 
 				bConnected = setInterval( function() {
+					if( Log != null )
+						Log.close();
+
 					Log = new WebSocket( "ws://" + URI + ":" + Port );
 
 					Log.onopen = function( e ) {
@@ -75,7 +79,7 @@
 			message.addEventListener( "click", function( e ) {
 				e.preventDefault();
 
-				Log.send( "hi there" );
+				Socket.SendMessage( "hi there" );
 
 				return false;
 			}, false );
@@ -124,8 +128,7 @@
 	<body>
 		<form id="connection">
 			<label for="host">Host:</label>
-			<!-- <input type="text" id="host" value="127.0.0.1" /> -->
-			<input type="text" id="host" value="10.211.55.3" />
+			<input type="text" id="host" value="127.0.0.1" />
 			<label for="port">Port:</label>
 			<input type="text" id="port" value="12345" />
 			<input type="submit" value="connect" />

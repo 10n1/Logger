@@ -33,23 +33,23 @@ extern "C" {
 // |                     Payload Data continued ...                |
 // +---------------------------------------------------------------+
 
-enum WSMessage_Type
-{
-    Handshake = 0,
-    Packet,
-    Count,
-};
-
-typedef struct _WSMessage
-{
-    unsigned int nSender;
-    unsigned int nType;
-    char* szData;
-} WSMessage;
+//enum WSMessage_Type
+//{
+//    Handshake = 0,
+//    Packet,
+//    Count,
+//};
+//
+//typedef struct _WSMessage
+//{
+//    unsigned int nSender;
+//    unsigned int nType;
+//    char* szData;
+//} WSMessage;
 
 
 static const char* LOCALHOST = "127.0.0.1";
-static const unsigned int DEFAULT_PORT = 8080; //12345;
+static const unsigned int DEFAULT_PORT = 12345;
 static const unsigned int RECEIVE_BUFFER_SIZE = 512;
 
 WebSocketServer::WebSocketServer( void )
@@ -75,65 +75,106 @@ WebSocketServer::~WebSocketServer( void )
 
 void WebSocketServer::Start( void )
 {
-    // open server socket to listen for client connections
-    OpenSocket();
-
-    bool bListening = true;
-
-    // accept incoming connections
-    m_ClientListener = accept( m_ServerSocket, NULL, NULL );
-    if( m_ClientListener == INVALID_SOCKET )
-    {
-        printf( "accept for m_ClientListener failed :(\n" );
-        closesocket( m_ServerSocket );
-        WSACleanup();
-        DebugBreak(); // crash!
-    }
-
+    bool bSocketOpen = false; 
+    bool bListening = false;
+    int iReceivedBytes = 0;
+    int iSentBytes = 0;
     char szReceiveBuffer[ RECEIVE_BUFFER_SIZE ];
     unsigned int nReceiveBufferSize = RECEIVE_BUFFER_SIZE;
-
     char szWebSocketKey[ MAX_PATH ];
     char szResponseHeader[ MAX_PATH ];
+    bool bHandshakeSuccessful = false;
 
-    while( bListening )
+
+    bSocketOpen = OpenSocket();
+
+    while( bSocketOpen )
     {
-        // execute initial handshake
-        int iReceivedBytes = recv( m_ClientListener, szReceiveBuffer, nReceiveBufferSize, 0 );
-        if( iReceivedBytes > 0 )
+        m_ClientListener = accept( m_ServerSocket, NULL, NULL );
+        if( m_ClientListener == INVALID_SOCKET )
         {
-            printf( "# bytes received: %d\n%s\n", iReceivedBytes, szReceiveBuffer );
-
-            RetrieveWebSocketKey( szReceiveBuffer, szWebSocketKey );
-            unsigned int nResponseLength = PrepareResponse( szWebSocketKey, szResponseHeader );
-            if( nResponseLength == 0 )
-            {
-                printf( "Invalid response length :(\n" );
-                DebugBreak();
-            }
-
-            int iSentBytes = send( m_ClientListener, szResponseHeader, nResponseLength, 0 );
-            if( iSentBytes == SOCKET_ERROR )
-            {
-                printf( "send failed :(\n" );
-                closesocket( m_ClientListener );
-                WSACleanup();
-                DebugBreak(); // crash!
-            }
-
-            printf( "# bytes sent: %d\n\%s\n", iSentBytes, szResponseHeader );
-        }
-        else
-        {
-            printf( "recv failed :(\n" );
-            bListening = false;
-            closesocket( m_ClientListener );
+            bSocketOpen = false;
+            printf( "accept for m_ClientListener failed :(\n" );
+            closesocket( m_ServerSocket );
             WSACleanup();
-            DebugBreak();// crash!
+        }
+
+        bListening = true;
+
+        while( bListening )
+        {
+
+            iReceivedBytes = recv( m_ClientListener, szReceiveBuffer, nReceiveBufferSize, 0 );
+
+            // process messages from webpage
+            if( iReceivedBytes > 0 )
+            {
+                printf( "# bytes received: %d\n%s\n", iReceivedBytes, szReceiveBuffer );
+
+                // the webpage will continue to attempt a connection until it succeeds
+                // so we have to check whether the message received is either:
+                //   a. connection attempt (websocket handshake)
+                //   b. regular/command message
+                char szRequestType[] = { szReceiveBuffer[0], szReceiveBuffer[1], szReceiveBuffer[2], 0 };
+                // if the first 3 characters of the request string are "GET"
+                // then:
+                //   this message is a connection attempt so the handshake needs to happen
+                // else:
+                //   this is a regular message and a successful connection exists
+                bHandshakeSuccessful = ( strcmp( "GET", szRequestType ) == 0 ) ? false : true;
+
+                // 1) process initial websocket handshake
+                if( !bHandshakeSuccessful )
+                {
+                    printf( "Processing websocket handshake...\n" );
+
+                    unsigned int nWebSocketKeyLength = RetrieveWebSocketKey( szReceiveBuffer, szWebSocketKey );
+                    unsigned int nResponseLength = PrepareResponse( szWebSocketKey, szResponseHeader );
+
+                    if( nResponseLength == 0 )
+                    {
+                        printf( "invalid response length :(\n" );
+                        break;
+                    }
+
+                    iSentBytes = send( m_ClientListener, szResponseHeader, nResponseLength, 0 );
+                    if( iSentBytes == SOCKET_ERROR )
+                    {
+                        bListening = false;
+                        printf( "send failed :(\n" );
+                        //closesocket( m_ClientListener );
+                        //WSACleanup();
+                        break;
+                    }
+                }
+                // 2) process regular messages
+                else
+                {
+                    printf( "Processing message from webpage logger...\n" );
+
+                    // TODO: parse out the commands sent from the webpage
+                    printf( "message from webpage: %x\n", szReceiveBuffer );
+                }
+            }
+            else
+            {
+                bListening = false;
+                printf( "recv failed :( \n" );
+                //closesocket( m_ClientListener );
+                //WSACleanup();
+                break;
+            }
         }
     }
 
+    CloseSocket();
+
     // ??
+}
+
+unsigned int WebSocketServer::ProcessHandshake( void )
+{
+    return 0;
 }
 
 void WebSocketServer::Stop( void )
@@ -210,6 +251,15 @@ bool WebSocketServer::OpenSocket( void )
     }
 
     return bInitialized;
+}
+
+// note: only closes server socket
+bool WebSocketServer::CloseSocket( void )
+{
+    closesocket( m_ServerSocket );
+    WSACleanup();
+
+    return true;
 }
 
 unsigned int WebSocketServer::RetrieveWebSocketKey(  const char* szRequestHeader, char* szWebSocketKey )
